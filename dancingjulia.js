@@ -1,4 +1,4 @@
-var canvas, gl, prog, size;
+var canvas, gl, prog, size, cLoc, scaleLoc;
 function init() {
     canvas = document.getElementById('thing');
     canvas.width = window.innerWidth;
@@ -22,7 +22,8 @@ function init() {
     gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
     gl.vertexAttribPointer(posAtrLoc, 3, gl.FLOAT, false, 0, 0); // wut?
     cLoc = gl.getUniformLocation(prog, "c");
-    gl.uniform2f(gl.getUniformLocation(prog, "scale"), size/2, size/3);
+    scaleLoc = gl.getUniformLocation(prog, "scale");
+    gl.uniform2f(scaleLoc, size/2, size/3);
     anim();
 }
 
@@ -30,6 +31,7 @@ function init() {
 function anim() {
     var t = (+new Date) / 1000;
     gl.uniform2f(cLoc, - .113 + Math.cos(t) / 2.4, - 0.579);
+    gl.uniform2f(scaleLoc, size/2 + 250 * Math.cos(t), size/3 + 250 * Math.sin(t));
     draw();
     requestAnimFrame(anim);
 }
