@@ -2,6 +2,97 @@
 <html>
   <head>
     <title>Thing</title>
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+      }
+      canvas {
+        float: left;
+      }
+    </style>
+    <script id="vertex" type="x-shader/x-vertex">
+    attribute vec3 vPos;
+
+    void main() {
+      gl_Position = vec4(vPos, 1.);
+    }
+    </script>
+    <script id="fragment" type="x-shader/x-fragment">
+    #ifdef GL_ES
+    precision highp float;
+    #endif
+
+    uniform vec2 c;
+    uniform vec2 scale;
+
+    const int MAX_ITERS = 50;
+    float CONST_LOG = log(log(4.)) / log(2.);
+
+    vec3 iterToRGB(int i, float z) {
+      float h = float(i) + CONST_LOG - log(log(z)) / log(2.);
+      // float h = float(i);
+      h = h / float(MAX_ITERS) * 360.;
+      if (h < 0.) h = 0.;
+      float hprime = h / 60.;
+      float x = 1. - abs(mod(hprime, 2.) - 1.);
+      float r = 0.;
+      float g = 0.;
+      float b = 0.;
+
+      if (0. <= hprime && hprime < 1.) {
+        r = 1.;
+        g = x;
+        b = 0.;
+      } else if (1. <= hprime && hprime < 2.) {
+        r = x;
+        g = 1.;
+        b = 0.;
+      } else if (2. <= hprime && hprime < 3.) {
+        r = 0.;
+        g = 1.;
+        b = x;
+      } else if (3. <= hprime && hprime < 4.) {
+        r = 0.;
+        g = x;
+        b = 1.;
+      } else if (4. <= hprime && hprime < 5.) {
+        r = x;
+        g = 0.;
+        b = 1.;
+      } else if (5. <= hprime && hprime < 6.) {
+        r = 1.;
+        g = 0.;
+        b = x;
+      }
+
+      return vec3(r, g, b);
+    }
+
+    void main() {
+      float R = (gl_FragCoord.x - scale.x) / scale.y;
+      float I = (gl_FragCoord.y - scale.x) / scale.y;
+      float R2 = R*R, I2 = I*I;
+      int mm;
+
+      for (int m = 0; m <= MAX_ITERS; m++) {
+        I = (R + R) * I + c.y;
+        R = R2 - I2 + c.x;
+        R2 = R * R;
+        I2 = I * I;
+        mm = m;
+        if (R2 + I2 > 4.) {
+          break;
+        }
+      }
+
+      if (mm == MAX_ITERS) {
+        gl_FragColor = vec4(.15, .15, .15, 1.);
+      } else {
+        gl_FragColor = vec4(iterToRGB(mm, R2 + I2), 1.);
+      }
+    }
+    </script>
     <script src="dancingjulia.js"></script>
   </head>
   <body onload="init()">

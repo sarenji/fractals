@@ -1,105 +1,69 @@
-var canvas, ctx, aInput, bInput;
+var canvas, gl, prog, size;
 function init() {
     canvas = document.getElementById('thing');
-    canvas.width = canvas.height = 500;
-    ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    size = Math.min(canvas.width, canvas.height);
 
-    //what was the specific function again?
-    setInterval(function() {
-        renderJulia(-0.5113, Math.sin(+new Date / Math.PI / 2000));
-    }, 50);
+    prog = gl.createProgram();
+    gl.attachShader(prog, getShader(gl, 'vertex'));
+    gl.attachShader(prog, getShader(gl, 'fragment'));
+    gl.linkProgram(prog);
+    gl.useProgram(prog);
+
+    var posAtrLoc = gl.getAttribLocation(prog, "vPos");
+    gl.enableVertexAttribArray(posAtrLoc); // what does this do again?
+    var posBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, posBuffer);
+    var vertices = new Float32Array([
+        -1,-1,0, 1, -1, 0, 1, 1, 0, -1, 1, 0]);
+    gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+    gl.vertexAttribPointer(posAtrLoc, 3, gl.FLOAT, false, 0, 0); // wut?
+    cLoc = gl.getUniformLocation(prog, "c");
+    gl.uniform2f(gl.getUniformLocation(prog, "scale"), size/2, size/3);
+    anim();
 }
 
-function renderJulia(a, b) {
-    var image = ctx.createImageData(canvas.width, canvas.height);
-
-    for (var y = 0; y < canvas.height; y++) {
-        for (var x = 0; x < canvas.width; x++) {
-            julia([x / canvas.width, y / canvas.height], [a, b], image);
-        }
-    }
-    ctx.putImageData(image, 0, 0);
+// TODO: Find pretty algorithm for animating `c`.
+function anim() {
+    var t = (+new Date) / 1000;
+    gl.uniform2f(cLoc, - .113 + Math.cos(t) / 2.4, - 0.579);
+    draw();
+    requestAnimFrame(anim);
 }
 
-function julia(z, c, image) {
-    // if iteration > 2, color as white
-    var x, y, x2, y2;
-    var a = c[0];
-    var b = c[1];
-
-    x = x2 = z[0];
-    y = y2 = z[1];
-    x *= canvas.width;
-    y *= canvas.height;
-
-    var rgb = [0, 0, 0];
-
-    for (var i = 0; i < 50; i++) {
-	var xTemp = x2 * x2 - y2 * y2 + a;
-        var yTemp = 2 * x2 * y2 + b;
-        x2 = xTemp;
-        y2 = yTemp;
-	var square = x2 * x2 + y2 * y2;
-        if (square > 4) {
-	    rgb = itorgb(i, square);
-            break;
-        }
-    }
-    image.data[(x + y * canvas.width) * 4 + 0] = rgb[0];
-    image.data[(x + y * canvas.width) * 4 + 1] = rgb[1];
-    image.data[(x + y * canvas.width) * 4 + 2] = rgb[2];
-    image.data[(x + y * canvas.width) * 4 + 3] = 255;
+function draw() {
+    gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
+    gl.flush();
 }
 
-function itorgb (i, z) {
-    var h = i + Math.log(Math.log(4)) / Math.log(2) - Math.log(Math.log(z)) / Math.log(2);
-    h = h / 50 * 360;
-    if (h < 0) h = 0;
-    var hprime = h / 60;
-    var x = 1 - Math.abs(hprime % 2 - 1);
-    var r = 0;
-    var g = 0;
-    var b = 0;
-
-    if (0 <= hprime && hprime < 1) {
-	r = 1;
-	g = x;
-	b = 0;
-    }
-
-    else if (1 <= hprime && hprime < 2) {
-	r = x;
-	g = 1;
-	b = 0;
-    }
-
-    else if (2 <= hprime && hprime < 3) {
-	r = 0;
-	g = 1;
-	b = x;
-    }
-
-    else if (3 <= hprime && hprime < 4) {
-	r = 0;
-	g = x;
-	b = 1;
-    }
-
-    else if (4 <= hprime && hprime < 5) {
-	r = x;
-	g = 0;
-	b = 1;
-    }
-
-    else if (5 <= hprime && hprime < 6) {
-	r = 1;
-	g = 0;
-	b = x;
-    }
-
-    r = Math.floor(r * 255);
-    g = Math.floor(g * 255);
-    b = Math.floor(b * 255);
-    
-    return [r, g, b];
+function getShader(gl, id) {
+    var shaderElement = document.getElementById(id);
+    var shaderScript = shaderElement.innerHTML;
+    var shader;
+    if (shaderElement.type == "x-shader/x-fragment")
+        shader = gl.createShader(gl.FRAGMENT_SHADER);
+    else if (shaderElement.type == "x-shader/x-vertex")
+        shader = gl.createShader(gl.VERTEX_SHADER);
+    else
+        return null;
+    gl.shaderSource(shader, shaderScript);
+    gl.compileShader(shader);
+    if (gl.getShaderParameter(shader, gl.COMPILE_STATUS) == 0)
+        alert(gl.getShaderInfoLog(shader));
+    return shader;
 }
+
+// shim layer with setTimeout fallback
+window.requestAnimFrame = (function(){
+  return  window.requestAnimationFrame       ||
+          window.webkitRequestAnimationFrame ||
+          window.mozRequestAnimationFrame    ||
+          window.oRequestAnimationFrame      ||
+          window.msRequestAnimationFrame     ||
+          function( callback ){
+            window.setTimeout(callback, 1000 / 60);
+          };
+})();
