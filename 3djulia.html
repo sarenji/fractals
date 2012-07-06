@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Thing</title>
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+      }
+      canvas {
+        float: left;
+      }
+    </style>
+    <script id="vertex" type="x-shader/x-vertex">
+    attribute vec3 vPos;
+
+    void main() {
+      gl_Position = vec4(vPos, 1.);
+    }
+    </script>
+    <script id="fragment" type="x-shader/x-fragment">
+    #ifdef GL_ES
+    precision highp float;
+    #endif
+
+    uniform vec4 c;
+    uniform vec4 scale;
+
+    const int MAX_ITERS = 50;
+    const int MAX_RAY_STEPS = 15;
+    const float EPSILON = .001;
+    const float ESCAPE_THRESHOLD = float(1e1);
+    const float POWER = 8.0;
+
+    vec4 quatMult( vec4 q1, vec4 q2 ) {
+      vec4 r;
+
+      r.x   = q1.x * q2.x - dot( q1.yzw, q2.yzw );
+      r.yzw = q1.x * q2.yzw + q2.x * q1.yzw + cross( q1.yzw, q2.yzw );
+
+      return r;
+    }
+
+    vec4 quatSq( vec4 q ) {
+      vec4 r;
+
+      r.x   = q.x * q.x - dot( q.yzw, q.yzw );
+      r.yzw = 2.0 * q.x * q.yzw;
+
+      return r;
+    }
+
+    float DE(vec3 pos) {
+      vec3 w = pos;
+      float dr = 1.0;
+      float r = 0.0;
+      for (int i = 0; i < MAX_ITERS; i++) {
+        r = length(w);
+        if (r > ESCAPE_THRESHOLD) break;
+
+        // convert to polar coordinates
+        // scale and rotate the point
+        // convert back to cartesian coordinates
+        // float x = w.x; float x2 = x*x; float x4 = x2*x2;
+        // float y = w.y; float y2 = y*y; float y4 = y2*y2;
+        // float z = w.z; float z2 = z*z; float z4 = z2*z2;
+
+        // float k3 = x2 + z2;
+        // float k2 = inversesqrt( k3*k3*k3*k3*k3*k3*k3 );
+        // float k1 = x4 + y4 + z4 - 6.0*y2*z2 - 6.0*x2*y2 + 2.0*z2*x2;
+        // float k4 = x2 - y2 + z2;
+
+        // w.x =  64.0*x*y*z*(x2-z2)*k4*(x4-6.0*x2*z2+z4)*k1*k2;
+        // w.y = -16.0*y2*k3*k4*k4 + k1*k1;
+        // w.z = -8.0*y*k4*(x4*x4 - 28.0*x4*x2*z2 + 70.0*x4*z4 - 28.0*x2*z2*z4 + z4*z4)*k1*k2;
+
+        // convert to polar coordinates
+        float theta = acos(w.z/r);
+        float phi = atan(w.y,w.x);
+        dr =  pow( r, POWER-1.0)*POWER*dr + 1.0;
+
+        // scale and rotate the point
+        float zr = pow( r,POWER);
+        theta = theta*POWER;
+        phi = phi*POWER;
+
+        // convert back to cartesian coordinates
+        w = zr*vec3(sin(theta)*cos(phi), sin(phi)*sin(theta), cos(theta));
+        w += pos;
+      }
+      return 0.5 * log(r) * r / dr;
+    }
+
+    float trace(vec3 from, vec3 direction) {
+      float totalDistance = 0.0;
+      int ss;
+      for (int steps=0; steps < MAX_RAY_STEPS; steps++) {
+        ss = steps;
+        vec3 p = from + totalDistance * direction;
+        float distance = DE(p);
+        totalDistance += distance;
+        if (distance < EPSILON) break;
+      }
+      return 1.0 - float(ss) / float(MAX_RAY_STEPS);
+    }
+
+    void main() {
+      vec3 from = vec3(0, 0, -1);
+      vec3 direction = vec3(0., 0., 1.);
+      vec3 color = vec3(.3, .3, .3);
+      float distance = trace(from, direction);
+      if (distance < EPSILON) {
+        color = vec3(1., 1., 1.);
+      }
+      gl_FragColor = vec4(color, 1.);
+    }
+    </script>
+    <script src="3djulia.js"></script>
+  </head>
+  <body onload="init()">
+    <canvas id="thing"></canvas>
+  </body>
+</html>
