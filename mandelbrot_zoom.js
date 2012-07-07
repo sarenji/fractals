@@ -1,8 +1,7 @@
 var canvas, gl, prog, size, cLoc, scaleLoc, startTime, amp;
 function init() {
     canvas = document.getElementById('thing');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    canvas.width = canvas.height = 500;
     amp = Math.min(canvas.width, canvas.height) / 2;
     gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
     gl.viewport(0, 0, canvas.width, canvas.height);
