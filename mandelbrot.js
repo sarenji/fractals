@@ -27,15 +27,15 @@ function mandelbrot(x, y, c1, c2, image) {
     var a = 2 * c1 - 1.5;
     var b = 2 * c2 - 1;
     var hex = [0, 0, 0];
-    
+
     x2 = y2 = 0;
 
     for (var i = 0; i < MAX_ITERATIONS; i++) {
-	var xTemp = x2 * x2 - y2 * y2 + a;
+        var xTemp = x2 * x2 - y2 * y2 + a;
         var yTemp = 2 * x2 * y2 + b;
         x2 = xTemp;
         y2 = yTemp;
-	var absz = x2 * x2 + y2 * y2;
+        var absz = x2 * x2 + y2 * y2;
         if (absz > 4) {
             hex = itorgb(i, absz);
 	    break;
@@ -95,7 +95,7 @@ function itorgb (i, absz) {
     r = Math.floor(r * 255);
     g = Math.floor(g * 255);
     b = Math.floor(b * 255);
-    
+
     return [r, g, b];
 }
 
