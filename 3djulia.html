@@ -287,6 +287,7 @@ vec3 intersectSphere( vec3 rO, vec3 rD ) {
 
 uniform vec3 rO;
 varying vec3 rD;
+uniform float t;
 uniform bool renderShadows;
 uniform vec4 mu;              // quaternion constant specifying the particular set
 uniform float epsilon;        // specifies precision of intersection
@@ -335,9 +336,9 @@ void main() {
 
       // Compute the Phong illumination at the point of intersection.
       color.rgb = Phong( light, rayDirection, rayOrigin, N );
+      color.a = 1.;
       // float p = float(steps) / float(MAX_ITERATIONS);
-      // color.rgb = vec3(p, p, p);
-      color.a = 1.0;  // (make this fragment opaque)
+      // color = vec4(p, p, p, 1);
    }
 
    // Return the final color which is still the background color if we didn't hit anything.

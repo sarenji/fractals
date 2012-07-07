@@ -1,4 +1,5 @@
 var canvas, gl, prog, size;
+var amplitude = 3;
 function init() {
     canvas = document.getElementById('thing');
     canvas.width = window.innerWidth;
@@ -34,9 +35,9 @@ function init() {
 
 function anim() {
     var t = (+new Date) / 1000;
-    gl.uniform4f(gl.getUniformLocation(prog, "mu"),
-        Math.cos(t), 0.4,
-        0, 0);
+    gl.uniform4f(gl.getUniformLocation(prog, "mu"), Math.cos(t), 0.4, 0, 0);
+    gl.uniform1f(gl.getUniformLocation(prog, "t"), t);
+    // gl.uniform3f(gl.getUniformLocation(prog, "rO"), amplitude * Math.cos(t), 0, amplitude * Math.sin(t));
     draw();
     requestAnimFrame(anim);
 }
