@@ -76,8 +76,8 @@
     vec2 misiurewicz = vec2(.407476, .2342045);
     // vec2 misiurewicz = vec2(-.77568377, .13646737);
     void main() {
-      float a = (gl_FragCoord.x - offset.x) / scale + misiurewicz.x + 100. * sin(t) / scale;
-      float b = (gl_FragCoord.y - offset.y) / scale + misiurewicz.y + 100. * cos(t) / scale;
+      float a = (gl_FragCoord.x + 100. * sin(t) - offset.x) / scale + misiurewicz.x;
+      float b = (gl_FragCoord.y + 100. * cos(t) - offset.y) / scale + misiurewicz.y;
       int mm;
       float m2;
 
