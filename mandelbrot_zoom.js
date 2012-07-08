@@ -22,7 +22,7 @@ function init() {
     gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
     gl.vertexAttribPointer(posAtrLoc, 3, gl.FLOAT, false, 0, 0); // wut?
     scaleLoc = gl.getUniformLocation(prog, "scale");
-    gl.uniform2f(scaleLoc, size/2, size/3);
+    gl.uniform1f(scaleLoc, 500);
     startTime = +new Date;
     anim();
 }

@@ -28,9 +28,10 @@
     uniform float t;
 
     const int MAX_ITERS = 300;
+    float LOG_2 = log(2.);
 
     vec3 iterToRGB(int i, float z) {
-      float h = float(i) + log(log(4.))/log(2.) - log(log(z)) / log(2.);
+      float h = float(i) + log(log(4.))/LOG_2 - log(log(z)) / LOG_2;
       // float h = float(i);
       h = h / float(MAX_ITERS) * 360.;
       if (h < 0.) h = 0.;
@@ -69,11 +70,7 @@
       return vec3(r, g, b);
     }
 
-    vec2 complexMult(vec2 a, vec2 b) {
-      return vec2(a.x*b.x - a.y*b.y, a.y * b.x + a.x * b.y);
-    }
-
-    vec2 misiurewicz = vec2(.407476, .2342045);
+    const vec2 misiurewicz = vec2(.407476, .2342045);
     // vec2 misiurewicz = vec2(-.77568377, .13646737);
     void main() {
       float dt = - t / 10.;
@@ -82,28 +79,22 @@
         sin(dt), cos(dt)
       );
 
-      // you want to rotatoe around that oint
       vec2 coord = gl_FragCoord.xy;
       coord -= misiurewicz + offset;
       coord = rotate * coord;
       coord += misiurewicz + offset;
-      // i think you can add the object to anotht container thats atdifferent origin
-      // this is a shader, so its as low level as you can gett
 
       float a = (coord.x + 100. * sin(t) - offset.x) / scale + misiurewicz.x;
       float b = (coord.y + 100. * cos(t) - offset.y) / scale + misiurewicz.y;
       int mm;
-      float m2;
 
       vec2 c = vec2(a, b);
       vec2 z = vec2(0, 0);
       vec2 dz = vec2(1, 0);
 
       for (int m = 0; m <= MAX_ITERS; m++) {
-        dz = 2. * complexMult(z, dz) + 1.;
-        z = complexMult(z, z) + c;
+        z = vec2(z.x * z.x - z.y * z.y, 2. * z.x * z.y) + c;
         mm = m;
-        m2 = length(z);
         if (dot(z, z) > 4.) {
           break;
         }
@@ -112,9 +103,8 @@
       if (mm == MAX_ITERS) {
         gl_FragColor = vec4(.15, .15, .15, 1.);
       } else {
-        // float d = sqrt(m2 / length(dz)) * .5 * log(m2);
-        // d = (1. - d) * float(MAX_ITERS);
-        gl_FragColor = vec4(iterToRGB(mm, dot(z, z)), 1.);
+        vec3 color = iterToRGB(mm, dot(z, z));
+        gl_FragColor = vec4(color, 1.);
       }
     }
     </script>
